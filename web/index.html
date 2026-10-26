@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LiDAR Point Cloud Viewer</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/" } }
+  </script>
+</head>
+<body>
+  <div id="ui">
+    <h1>Point Cloud Viewer</h1>
+
+    <div id="statusbar">
+      <span id="conn-dot" class="dot off"></span>
+      <span id="conn-text">disconnected</span>
+    </div>
+
+    <label>Transport
+      <select id="transport">
+        <option value="binary">Binary relay (pc_relay.py)</option>
+        <option value="rosbridge">rosbridge (JSON, port 9090)</option>
+      </select>
+    </label>
+
+    <label>WebSocket URL
+      <input id="ws-url" type="text" spellcheck="false" />
+    </label>
+
+    <label>Topic
+      <input id="topic" type="text" spellcheck="false" />
+    </label>
+
+    <div class="row">
+      <button id="btn-connect">Connect</button>
+      <button id="btn-disconnect" disabled>Disconnect</button>
+    </div>
+
+    <hr />
+
+    <label>Point size <span id="point-size-val"></span>
+      <input id="point-size" type="range" min="0.5" max="8" step="0.5" />
+    </label>
+
+    <label>Color
+      <select id="color-mode">
+        <option value="height">Height (z)</option>
+        <option value="intensity">Intensity</option>
+        <option value="uniform">Uniform</option>
+      </select>
+    </label>
+
+    <label>Max points <span id="max-points-val"></span>
+      <input id="max-points" type="range" min="5000" max="200000" step="5000" />
+    </label>
+
+    <label>Clip range (m, 0 = off)
+      <input id="clip-range" type="number" min="0" step="10" />
+    </label>
+
+    <button id="btn-reset-view">Reset view</button>
+    <button id="btn-tests">Run decoder tests</button>
+
+    <hr />
+
+    <div id="stats">
+      <div>msg rate: <span id="stat-rate">–</span> Hz</div>
+      <div>points: <span id="stat-points">–</span></div>
+      <div>bandwidth: <span id="stat-bw">–</span> kB/s</div>
+      <div>frames: <span id="stat-frames">0</span> (dropped: <span id="stat-dropped">0</span>)</div>
+      <div>topic: <span id="stat-topic">–</span></div>
+      <div>decode: <span id="stat-decode">–</span></div>
+    </div>
+
+    <div id="errors"></div>
+  </div>
+
+  <div id="viewport"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

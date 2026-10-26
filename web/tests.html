@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>LiDAR Point Cloud Viewer — Tests</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #ddd; padding: 20px; }
+    .ok { color: #6f6; } .fail { color: #f66; }
+  </style>
+</head>
+<body>
+  <h1>PointCloud2 decoder tests</h1>
+  <div id="out">running…</div>
+  <script src="js/pc2.js"></script>
+  <script src="js/decoder_tests.js"></script>
+  <script>
+    const results = DecoderTests.run();
+    const out = document.getElementById("out");
+    out.innerHTML = results.map(r =>
+      `<div class="${r.ok ? "ok" : "fail"}">${r.ok ? "PASS" : "FAIL"} — ${r.name}` +
+      (r.error ? ` — ${r.error}` : "") + `</div>`).join("");
+    const nOK = results.filter(r => r.ok).length;
+    out.innerHTML += `<h2 class="${nOK === results.length ? "ok" : "fail"}">${nOK}/${results.length} passed</h2>`;
+  </script>
+</body>
+</html>

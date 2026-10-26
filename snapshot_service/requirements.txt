@@ -1,0 +1,13 @@
+# Runtime
+fastapi>=0.110
+uvicorn>=0.27
+numpy>=1.21
+Pillow>=9.0
+
+# Rendering backends (renderer uses Open3D when available, falls back to Matplotlib)
+open3d>=0.17
+matplotlib>=3.5
+
+# Tests
+pytest>=7.0
+httpx>=0.24

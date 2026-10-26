@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Remote LiDAR Snapshot Viewer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Remote LiDAR Snapshot Viewer</h1>
+    <div class="conn">
+      <span id="conn-dot" class="dot dot-unknown"></span>
+      <span id="conn-text">Checking API&hellip;</span>
+      <button id="btn-check" class="small" title="Re-check API health">Check</button>
+    </div>
+  </header>
+
+  <section class="controls">
+    <label for="api-base">API endpoint</label>
+    <input id="api-base" type="text" spellcheck="false"
+           placeholder="http://100.x.y.z:8085  (same origin by default)" />
+    <label for="api-token">API token (optional)</label>
+    <input id="api-token" type="password" placeholder="only if the host requires one" />
+    <button id="btn-fetch" class="primary">Fetch Point Cloud</button>
+    <button id="btn-zip" disabled>Download All Images ZIP</button>
+  </section>
+
+  <div id="status" class="status" role="status"></div>
+  <div id="spinner" class="spinner" hidden>
+    <div class="spin"></div>
+    <span>Capturing point cloud and rendering four views&hellip;</span>
+  </div>
+  <div id="error" class="error" hidden></div>
+
+  <section id="meta" class="meta" hidden>
+    <div><span class="k">Snapshot</span><span id="m-id">&mdash;</span></div>
+    <div><span class="k">Capture time</span><span id="m-capture">&mdash;</span></div>
+    <div><span class="k">ROS msg time</span><span id="m-ros">&mdash;</span></div>
+    <div><span class="k">Frame</span><span id="m-frame">&mdash;</span></div>
+    <div><span class="k">Topic</span><span id="m-topic">&mdash;</span></div>
+    <div><span class="k">Points (valid / rendered)</span><span id="m-points">&mdash;</span></div>
+    <div><span class="k">Render time</span><span id="m-rendertime">&mdash;</span></div>
+    <div id="m-warnings-row" hidden><span class="k">Warnings</span><span id="m-warnings"></span></div>
+  </section>
+
+  <section class="panels">
+    <figure><figcaption>Top</figcaption><img id="img-top" alt="Top view" />
+      <a id="dl-top" class="dl" download="top.png">Download PNG</a></figure>
+    <figure><figcaption>Side</figcaption><img id="img-side" alt="Side view" />
+      <a id="dl-side" class="dl" download="side.png">Download PNG</a></figure>
+    <figure><figcaption>Front</figcaption><img id="img-front" alt="Front view" />
+      <a id="dl-front" class="dl" download="front.png">Download PNG</a></figure>
+    <figure><figcaption>45&deg; Perspective</figcaption><img id="img-perspective" alt="Perspective view" />
+      <a id="dl-perspective" class="dl" download="perspective.png">Download PNG</a></figure>
+  </section>
+
+  <footer>
+    <p>Single-shot point-cloud snapshots &mdash; no continuous streaming.
+       Requests are only sent when you click <strong>Fetch Point Cloud</strong>.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

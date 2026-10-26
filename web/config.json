@@ -1,0 +1,10 @@
+{
+  "transport": "binary",
+  "ws_url": "ws://localhost:9091",
+  "topic": "/ouster/points",
+  "max_points": 50000,
+  "point_size": 2,
+  "color_mode": "height",
+  "clip_range": 120,
+  "auto_connect": false
+}

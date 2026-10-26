@@ -1,0 +1,26 @@
+{
+  "topic": "/ouster/points",
+  "host": "0.0.0.0",
+  "port": 8085,
+  "api_token": "",
+
+  "stale_after_sec": 5.0,
+  "stale_policy": "warn",
+
+  "renderer": "auto",
+  "image_width": 1280,
+  "image_height": 720,
+  "background_color": "0.05,0.05,0.08",
+  "color_mode": "height",
+  "up_axis": "z",
+  "point_size": 3.0,
+  "fov_deg": 60.0,
+  "perspective_elev_deg": 45.0,
+  "perspective_azim_deg": -60.0,
+  "clip_range_m": 60.0,
+
+  "max_render_points": 300000,
+  "max_concurrent_renders": 1,
+  "max_snapshots": 50,
+  "snapshot_retention_sec": 600.0
+}

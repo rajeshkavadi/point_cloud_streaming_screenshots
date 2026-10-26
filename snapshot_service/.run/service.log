@@ -1,0 +1,90 @@
+2026-10-26 14:43:32,455 INFO root: starting HTTP server on 0.0.0.0:8085 (topic=/ouster/points, renderer=auto)
+INFO:     Started server process [294365]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8085 (Press CTRL+C to quit)
+2026-10-26 14:43:32,593 INFO pc_snapshot.ros_subscriber: subscribed to /ouster/points (depth=5)
+INFO:     127.0.0.1:41854 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET / HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /style.css HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /app.js HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     115.249.170.237:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /api/health HTTP/1.1" 200 OK
+2026-10-26 14:44:34,493 WARNING pc_snapshot.renderer: Open3D backend failed (Open3D rendering failed: setup_camera(): incompatible function arguments. The following argument types are supported:
+    1. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, vertical_field_of_view: typing.SupportsFloat, center: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], eye: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], up: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], near_clip: typing.SupportsFloat = -1.0, far_clip: typing.SupportsFloat = -1.0) -> None
+    2. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, intrinsics: open3d.pybind.camera.PinholeCameraIntrinsic, extrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> None
+    3. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, intrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"], extrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"], intrinsic_width_px: typing.SupportsInt, intrinsic_height_px: typing.SupportsInt) -> None
+
+Invoked with: <open3d.pybind.visualization.rendering.OffscreenRenderer object at 0x7ecc4c1a48f0>, 60.0, AxisAlignedBoundingBox: min: (-2.4133, -1.93018, -1.31439), max: (3.21039, 3.20955, 0.097362), array([0.39854424, 0.63968278, 5.46537856]), array([0., 1., 0.])); falling back to Matplotlib
+Using 'soft' CircularBuffer (12288 KiB)
+FEngine (64 bits) created at 0x7ecc22151220 (threading is enabled)
+FEngine resolved backend: Vulkan
+Vulkan device driver: llvmpipe Mesa 23.2.1-1ubuntu3.1~22.04.4 (LLVM 15.0.7)
+Selected physical device 'llvmpipe (LLVM 15.0.7, 256 bits)' from 1 physical devices. (vendor 0x10005, device 0x0, driver 0x1, api 1.3)
+Backend feature level: 3
+FEngine feature level: 1
+2026-10-26 14:44:37,778 INFO pc_snapshot.jobs: snapshot 6db0a3e4b36d432cae42c61bbe51c1b5 rendered in 5.25s (130937 points)
+[Open3D INFO] EngineInstance: Vulkan software device detected; using Filament's Vulkan backend
+INFO:     115.249.170.237:0 - "POST /api/snapshot HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /api/snapshot/6db0a3e4b36d432cae42c61bbe51c1b5/top.png?t=1793006077829 HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /api/snapshot/6db0a3e4b36d432cae42c61bbe51c1b5/perspective.png?t=1793006077830 HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/snapshot/6db0a3e4b36d432cae42c61bbe51c1b5/front.png?t=1793006077830 HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/snapshot/6db0a3e4b36d432cae42c61bbe51c1b5/side.png?t=1793006077830 HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET / HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /style.css HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /app.js HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     112.133.253.176:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     112.133.253.176:0 - "GET /api/health HTTP/1.1" 200 OK
+2026-10-26 14:47:35,189 WARNING pc_snapshot.renderer: Open3D backend failed (Open3D rendering failed: setup_camera(): incompatible function arguments. The following argument types are supported:
+    1. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, vertical_field_of_view: typing.SupportsFloat, center: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], eye: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], up: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], near_clip: typing.SupportsFloat = -1.0, far_clip: typing.SupportsFloat = -1.0) -> None
+    2. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, intrinsics: open3d.pybind.camera.PinholeCameraIntrinsic, extrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> None
+    3. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, intrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"], extrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"], intrinsic_width_px: typing.SupportsInt, intrinsic_height_px: typing.SupportsInt) -> None
+
+Invoked with: <open3d.pybind.visualization.rendering.OffscreenRenderer object at 0x7ecc25acbfb0>, 60.0, AxisAlignedBoundingBox: min: (-1.81074, -1.76651, -1.34817), max: (2.46595, 2.38019, 0.0998642), array([0.32760349, 0.30684116, 4.18149514]), array([0., 1., 0.])); falling back to Matplotlib
+Using 'soft' CircularBuffer (12288 KiB)
+FEngine (64 bits) created at 0x7ecb72beb660 (threading is enabled)
+FEngine resolved backend: Vulkan
+Vulkan device driver: llvmpipe Mesa 23.2.1-1ubuntu3.1~22.04.4 (LLVM 15.0.7)
+Selected physical device 'llvmpipe (LLVM 15.0.7, 256 bits)' from 1 physical devices. (vendor 0x10005, device 0x0, driver 0x1, api 1.3)
+Backend feature level: 3
+FEngine feature level: 1
+2026-10-26 14:47:37,684 INFO pc_snapshot.jobs: snapshot eeca2e6a833a42c196802a36c293eaae rendered in 2.79s (130866 points)
+[Open3D INFO] EngineInstance: Vulkan software device detected; using Filament's Vulkan backend
+INFO:     112.133.253.176:0 - "POST /api/snapshot HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/snapshot/eeca2e6a833a42c196802a36c293eaae/front.png?t=1793006257796 HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/snapshot/eeca2e6a833a42c196802a36c293eaae/top.png?t=1793006257795 HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/snapshot/eeca2e6a833a42c196802a36c293eaae/side.png?t=1793006257796 HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/snapshot/eeca2e6a833a42c196802a36c293eaae/perspective.png?t=1793006257796 HTTP/1.1" 200 OK
+2026-10-26 14:51:11,992 WARNING pc_snapshot.renderer: Open3D backend failed (Open3D rendering failed: setup_camera(): incompatible function arguments. The following argument types are supported:
+    1. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, vertical_field_of_view: typing.SupportsFloat, center: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], eye: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], up: typing.Annotated[numpy.typing.ArrayLike, numpy.float32, "[3, 1]"], near_clip: typing.SupportsFloat = -1.0, far_clip: typing.SupportsFloat = -1.0) -> None
+    2. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, intrinsics: open3d.pybind.camera.PinholeCameraIntrinsic, extrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> None
+    3. (self: open3d.pybind.visualization.rendering.OffscreenRenderer, intrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"], extrinsic_matrix: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"], intrinsic_width_px: typing.SupportsInt, intrinsic_height_px: typing.SupportsInt) -> None
+
+Invoked with: <open3d.pybind.visualization.rendering.OffscreenRenderer object at 0x7ecc2570d8f0>, 60.0, AxisAlignedBoundingBox: min: (-2.78202, -4.05185, -1.39614), max: (4.20044, 1.96897, 1.57395), array([ 0.70920999, -1.04143933,  7.68209866]), array([0., 1., 0.])); falling back to Matplotlib
+Using 'soft' CircularBuffer (12288 KiB)
+FEngine (64 bits) created at 0x7ecb73fbc390 (threading is enabled)
+FEngine resolved backend: Vulkan
+Vulkan device driver: llvmpipe Mesa 23.2.1-1ubuntu3.1~22.04.4 (LLVM 15.0.7)
+Selected physical device 'llvmpipe (LLVM 15.0.7, 256 bits)' from 1 physical devices. (vendor 0x10005, device 0x0, driver 0x1, api 1.3)
+Backend feature level: 3
+FEngine feature level: 1
+2026-10-26 14:51:14,598 INFO pc_snapshot.jobs: snapshot 095e633a5fad427d98f93c0f964363b2 rendered in 2.95s (131003 points)
+[Open3D INFO] EngineInstance: Vulkan software device detected; using Filament's Vulkan backend
+INFO:     112.133.253.176:0 - "POST /api/snapshot HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/snapshot/095e633a5fad427d98f93c0f964363b2/side.png?t=1793006474666 HTTP/1.1" 200 OK
+INFO:     112.133.253.176:0 - "GET /api/snapshot/095e633a5fad427d98f93c0f964363b2/front.png?t=1793006474666 HTTP/1.1" 200 OK
+INFO:     115.249.170.237:0 - "GET /api/snapshot/095e633a5fad427d98f93c0f964363b2/perspective.png?t=1793006474666 HTTP/1.1" 200 OK
+2026-10-26 14:55:02,231 INFO pc_snapshot.jobs: swept 1 expired snapshots
+2026-10-26 14:58:02,241 INFO pc_snapshot.jobs: swept 1 expired snapshots
+2026-10-26 15:01:32,246 INFO pc_snapshot.jobs: swept 1 expired snapshots
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [294365]

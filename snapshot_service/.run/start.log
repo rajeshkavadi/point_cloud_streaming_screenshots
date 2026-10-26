@@ -1,0 +1,46 @@
+Starting snapshot service (topic=/ouster/points, port=8085, clip=60m)...
+  pid 291271, log /home/rajesh/point_cloud_streaming_screenshots/snapshot_service/.run/service.log
+Starting bag playback: /home/rajesh/point_cloud_streaming_screenshots/Outdoor_cut1_dataset_ros2.db3
+  pid 291273, log /home/rajesh/point_cloud_streaming_screenshots/snapshot_service/.run/bag.log
+
+Health check:
+{
+    "status": "ok",
+    "service": "pc-snapshot",
+    "version": "0.1.0",
+    "ros": {
+        "listener_alive": true,
+        "listener_start_error": null,
+        "connected": true
+    },
+    "point_cloud": {
+        "topic": "/ouster/points",
+        "message_received": true,
+        "latest_message_age_sec": 0.116,
+        "stale": false,
+        "stale_after_sec": 5.0,
+        "latest_frame_id": "os_sensor",
+        "latest_ros_stamp": 1747409918.2800558,
+        "latest_point_count": 131072,
+        "messages_received": 9,
+        "messages_rejected": 0,
+        "captures": 0,
+        "last_error": null
+    },
+    "render": {
+        "renderer": "auto",
+        "image_size": [
+            1280,
+            720
+        ],
+        "max_render_points": 300000,
+        "max_concurrent_renders": 1
+    },
+    "host": {
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+        "python": "3.10.12"
+    },
+    "time": 1793003780.865074
+}
+
+Open http://127.0.0.1:8085/ in a browser. Stop with scripts/stop_all.sh
