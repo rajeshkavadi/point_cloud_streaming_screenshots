@@ -1,19 +1,23 @@
 /* Remote LiDAR Snapshot Viewer frontend.
  *
- * Single-shot behavior: requests are only sent when the user clicks
- * "Fetch Point Cloud". No polling of images, no streaming.
+ * One-shot behavior by default: requests are only sent when the user clicks
+ * "Fetch Point Cloud". An opt-in Live View streams rendered frames via
+ * multipart/x-mixed-replace (the <img> tag receives frames natively).
  */
 "use strict";
 
-const VIEWS = ["top", "side", "front", "perspective"];
+const VIEWS = ["top", "front", "back", "left", "right"];
 const LS_BASE = "pcsnap_api_base";
 const LS_TOKEN = "pcsnap_api_token";
 const REQUEST_TIMEOUT_MS = 240000; // rendering can take a while on big clouds
+const LIVE_STATUS_INTERVAL_MS = 2500;
 
 const $ = (id) => document.getElementById(id);
 
 let busy = false;
 let lastZipUrl = null;
+let liveOn = false;
+let liveStatusTimer = null;
 
 function apiBase() {
   let base = ($("api-base").value || "").trim().replace(/\/+$/, "");
@@ -168,13 +172,115 @@ async function downloadViaFetch(url, filename) {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
+// ---------------------------------------------------------------------------
+// Live view (multipart/x-mixed-replace)
+// ---------------------------------------------------------------------------
+function liveShowError(msg) {
+  const el = $("live-error");
+  el.hidden = !msg;
+  el.textContent = msg || "";
+}
+
+function liveSetStatus(text) {
+  $("live-status").textContent = text;
+}
+
+function startLive() {
+  const view = $("live-view").value;
+  const token = ($("api-token").value || "").trim();
+  let url = `${apiBase()}/api/stream?view=${encodeURIComponent(view)}`;
+  if (token) url += `&token=${encodeURIComponent(token)}`;
+
+  liveShowError("");
+  const img = $("live-frame");
+  // Clear any previous stream before assigning a new one.
+  img.onload = null;
+  img.src = url;
+  $("live-figure").hidden = false;
+  liveOn = true;
+  $("btn-live").textContent = "Stop Live View";
+  $("btn-live").classList.remove("primary");
+  liveSetStatus("connecting…");
+
+  // The browser loads frames silently; poll /api/health for real stats.
+  if (liveStatusTimer) clearInterval(liveStatusTimer);
+  liveStatusTimer = setInterval(updateLiveStatus, LIVE_STATUS_INTERVAL_MS);
+  updateLiveStatus();
+
+  img.onerror = () => {
+    // Only meaningful while we expect the stream to be up.
+    if (!liveOn) return;
+    liveShowError("Live stream failed to load (401? wrong token? service down?).");
+    liveSetStatus("error");
+  };
+}
+
+function stopLive() {
+  liveOn = false;
+  const img = $("live-frame");
+  img.onerror = null;
+  img.src = ""; // closing the src aborts the multipart connection server-side
+  $("live-figure").hidden = true;
+  $("btn-live").textContent = "Start Live View";
+  $("btn-live").classList.add("primary");
+  liveSetStatus("idle");
+  if (liveStatusTimer) {
+    clearInterval(liveStatusTimer);
+    liveStatusTimer = null;
+  }
+  liveShowError("");
+}
+
+async function updateLiveStatus() {
+  if (!liveOn) return;
+  try {
+    const resp = await fetch(apiBase() + "/api/health", {
+      headers: authHeaders(),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const h = await resp.json();
+    const s = h.stream || {};
+    if (s.last_error) {
+      liveShowError("Server: " + s.last_error);
+      liveSetStatus("render error");
+      return;
+    }
+    const fps = s.last_fps != null ? s.last_fps : 0;
+    const pts = s.last_points != null ? s.last_points : 0;
+    const age = s.last_frame_age_sec;
+    if (s.clients === 0 || !s.render_loop_alive) {
+      liveSetStatus("waiting for server…");
+    } else if (age != null && age > 10) {
+      liveSetStatus(`no new frames (${age}s old) — is the bag playing?`);
+    } else {
+      liveSetStatus(`${fps} fps · ${pts.toLocaleString()} pts`);
+    }
+    liveShowError("");
+  } catch (err) {
+    liveSetStatus("health check failed: " + err.message);
+  }
+}
+
 function init() {
   loadSettings();
   $("api-base").value = $("api-base").value || window.location.origin;
   $("btn-fetch").addEventListener("click", fetchSnapshot);
   $("btn-check").addEventListener("click", checkHealth);
-  $("api-base").addEventListener("change", () => { saveSettings(); checkHealth(); });
-  $("api-token").addEventListener("change", () => { saveSettings(); checkHealth(); });
+  $("api-base").addEventListener("change", () => {
+    saveSettings(); checkHealth();
+    if (liveOn) { stopLive(); startLive(); } // re-point the stream
+  });
+  $("api-token").addEventListener("change", () => {
+    saveSettings(); checkHealth();
+    if (liveOn) { stopLive(); startLive(); }
+  });
+  $("btn-live").addEventListener("click", () => {
+    if (liveOn) stopLive(); else startLive();
+  });
+  $("live-view").addEventListener("change", () => {
+    if (liveOn) { stopLive(); startLive(); } // switch camera angle
+  });
   $("btn-zip").addEventListener("click", async () => {
     if (!lastZipUrl) return;
     $("btn-zip").disabled = true;

@@ -1,0 +1,11 @@
+cd /home/rajesh/point_cloud_streaming_screenshots/snapshot_service
+source /opt/ros/humble/setup.bash
+pip3 install -r requirements.txt
+./scripts/start_all.sh /home/rajesh/point_cloud_streaming_screenshots/Outdoor_cut1_dataset_ros2.db3
+
+
+----
+
+# Live demo 
+cd /home/rajesh/point_cloud_streaming_screenshots/snapshot_service
+./scripts/start_remote.sh /home/rajesh/point_cloud_streaming_screenshots/Outdoor_cut1_dataset_ros2.db3

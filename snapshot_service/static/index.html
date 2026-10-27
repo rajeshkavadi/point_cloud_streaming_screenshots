@@ -26,10 +26,35 @@
     <button id="btn-zip" disabled>Download All Images ZIP</button>
   </section>
 
+  <section class="live">
+    <div class="live-head">
+      <h2>Live View</h2>
+      <div class="live-controls">
+        <label for="live-view">Camera</label>
+        <select id="live-view">
+          <option value="front" selected>Front (at sensor)</option>
+          <option value="back">Back</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+          <option value="top">Top</option>
+        </select>
+        <button id="btn-live" class="primary">Start Live View</button>
+        <span id="live-status" class="live-status">idle</span>
+      </div>
+    </div>
+    <p class="live-hint">Opt-in continuous render of the incoming topic
+       (MJPEG over <code>multipart/x-mixed-replace</code>) &mdash; rendering
+       starts only while this view is running.</p>
+    <figure id="live-figure" hidden>
+      <img id="live-frame" alt="Live point cloud stream" />
+    </figure>
+    <div id="live-error" class="error" hidden></div>
+  </section>
+
   <div id="status" class="status" role="status"></div>
   <div id="spinner" class="spinner" hidden>
     <div class="spin"></div>
-    <span>Capturing point cloud and rendering four views&hellip;</span>
+    <span>Capturing point cloud and rendering five views&hellip;</span>
   </div>
   <div id="error" class="error" hidden></div>
 
@@ -47,17 +72,20 @@
   <section class="panels">
     <figure><figcaption>Top</figcaption><img id="img-top" alt="Top view" />
       <a id="dl-top" class="dl" download="top.png">Download PNG</a></figure>
-    <figure><figcaption>Side</figcaption><img id="img-side" alt="Side view" />
-      <a id="dl-side" class="dl" download="side.png">Download PNG</a></figure>
-    <figure><figcaption>Front</figcaption><img id="img-front" alt="Front view" />
+    <figure><figcaption>Front <span class="hint">(from sensor)</span></figcaption><img id="img-front" alt="Front view" />
       <a id="dl-front" class="dl" download="front.png">Download PNG</a></figure>
-    <figure><figcaption>45&deg; Perspective</figcaption><img id="img-perspective" alt="Perspective view" />
-      <a id="dl-perspective" class="dl" download="perspective.png">Download PNG</a></figure>
+    <figure><figcaption>Back <span class="hint">(from sensor)</span></figcaption><img id="img-back" alt="Back view" />
+      <a id="dl-back" class="dl" download="back.png">Download PNG</a></figure>
+    <figure><figcaption>Left <span class="hint">(from sensor)</span></figcaption><img id="img-left" alt="Left view" />
+      <a id="dl-left" class="dl" download="left.png">Download PNG</a></figure>
+    <figure><figcaption>Right <span class="hint">(from sensor)</span></figcaption><img id="img-right" alt="Right view" />
+      <a id="dl-right" class="dl" download="right.png">Download PNG</a></figure>
   </section>
 
   <footer>
-    <p>Single-shot point-cloud snapshots &mdash; no continuous streaming.
-       Requests are only sent when you click <strong>Fetch Point Cloud</strong>.</p>
+    <p>One-shot snapshots on demand (<strong>Fetch Point Cloud</strong>), plus
+       an opt-in <strong>Live View</strong> that streams rendered frames of the
+       incoming topic while running.</p>
   </footer>
 
   <script src="app.js"></script>

@@ -5,6 +5,7 @@ Endpoints:
     POST /api/snapshot
     GET  /api/snapshot/{snapshot_id}/{view}.png
     GET  /api/snapshot/{snapshot_id}/download.zip
+    GET  /api/stream                (live MJPEG-style point cloud stream)
     GET  /                       (static browser frontend)
 
 The app depends only on a SnapshotStore and a RenderCoordinator, so it can be
@@ -22,16 +23,18 @@ from typing import Optional
 import anyio
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import (FileResponse, JSONResponse, Response,
+                               StreamingResponse)
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .config import Config
+from .config import VIEW_NAMES, Config
 from .jobs import (JobBusyError, RenderCoordinator, SnapshotNotFound,
                    build_zip)
-from .renderer import RenderError, VIEW_NAMES
+from .renderer import RenderError
 from .ros_subscriber import RosCloudListener
 from .store import SnapshotStore
+from .stream import BOUNDARY, StreamManager, mjpeg_generator
 
 log = logging.getLogger(__name__)
 
@@ -40,12 +43,16 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 def create_app(cfg: Config, store: SnapshotStore,
                coordinator: RenderCoordinator,
-               listener: Optional[RosCloudListener] = None) -> FastAPI:
+               listener: Optional[RosCloudListener] = None,
+               stream: Optional[StreamManager] = None) -> FastAPI:
     app = FastAPI(title="Remote LiDAR Snapshot Service", version=__version__)
     app.state.cfg = cfg
     app.state.store = store
     app.state.coordinator = coordinator
     app.state.listener = listener
+    # A StreamManager renders on-demand only (threads start when a client
+    # connects), so creating a default one here is safe even in tests.
+    app.state.stream = stream if stream is not None else StreamManager(cfg, store)
 
     app.add_middleware(
         CORSMiddleware,
@@ -88,6 +95,7 @@ def create_app(cfg: Config, store: SnapshotStore,
                 "max_render_points": cfg.max_render_points,
                 "max_concurrent_renders": cfg.max_concurrent_renders,
             },
+            "stream": app.state.stream.status(),
             "host": {"platform": platform.platform(),
                      "python": platform.python_version()},
             "time": time.time(),
@@ -158,6 +166,34 @@ def create_app(cfg: Config, store: SnapshotStore,
             "download_zip": f"{base}/api/snapshot/{artifact.snapshot_id}/download.zip",
             "warnings": warnings,
         }
+
+    # ------------------------------------------------------------------
+    # Live point-cloud stream (multipart/x-mixed-replace, MJPEG-style)
+    # ------------------------------------------------------------------
+    @app.get("/api/stream")
+    async def stream_endpoint(request: Request,
+                              view: Optional[str] = Query(default=None),
+                              _: None = Depends(require_token)):
+        """Live view of the incoming point cloud as JPEG frames.
+
+        Uses the same multipart/x-mixed-replace mechanism as Flask/OpenCV
+        camera-streaming tutorials: a plain browser <img> tag displays it,
+        no WebSocket/video codec needed. ?view= picks the camera angle.
+        """
+        if not cfg.stream_enabled:
+            raise HTTPException(status_code=404, detail="streaming disabled")
+        mgr: StreamManager = app.state.stream
+        view_name = view or cfg.stream_view
+        if view_name not in VIEW_NAMES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"unknown view {view_name!r}; "
+                       f"expected one of {list(VIEW_NAMES)}")
+
+        mgr.add_client(view_name)
+        return StreamingResponse(
+            mjpeg_generator(mgr, view_name),
+            media_type=f"multipart/x-mixed-replace; boundary={BOUNDARY}")
 
     @app.get("/api/snapshot/{snapshot_id}/download.zip")
     async def get_zip(snapshot_id: str):

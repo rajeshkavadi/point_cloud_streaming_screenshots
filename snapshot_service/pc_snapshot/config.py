@@ -10,6 +10,12 @@ from typing import List, Optional
 
 ENV_PREFIX = "PCSNAP_"
 
+# The camera views produced by every snapshot render and available to the
+# live stream. Single source of truth (renderer imports these).
+# front/back/left/right are FIRST-PERSON: the camera sits at the sensor
+# origin (the Livox/Ouster position) and looks outward in that direction.
+VIEW_NAMES = ("top", "front", "back", "left", "right")
+
 
 @dataclass
 class Config:
@@ -36,8 +42,6 @@ class Config:
     up_axis: str = "z"                   # z (ROS/robotics) or y (aerospace)
     point_size: float = 3.0
     fov_deg: float = 60.0
-    perspective_elev_deg: float = 45.0   # oblique view elevation (~45 deg)
-    perspective_azim_deg: float = -60.0
     clip_range_m: float = 0.0            # radial clip from sensor origin; 0 = off
 
     # Resource bounds
@@ -45,6 +49,16 @@ class Config:
     max_concurrent_renders: int = 1
     max_snapshots: int = 50              # bounded snapshot registry
     snapshot_retention_sec: float = 600.0
+
+    # Live streaming (multipart/x-mixed-replace MJPEG-style point cloud view)
+    stream_enabled: bool = True
+    stream_width: int = 960              # live view renders smaller for FPS
+    stream_height: int = 540
+    stream_fps: float = 5.0              # target frames/sec (render-bound)
+    stream_max_points: int = 60_000      # fewer points -> faster live render
+    stream_jpeg_quality: int = 72        # 1-95; lower = less bandwidth
+    stream_view: str = "front"           # default live camera view
+    stream_idle_stop_sec: float = 15.0   # stop render loop after clients leave
 
     # ------------------------------------------------------------------
     @classmethod
@@ -81,6 +95,17 @@ class Config:
             raise ValueError("max_render_points must be >= 1000")
         if self.clip_range_m < 0:
             raise ValueError("clip_range_m must be >= 0")
+        if self.stream_view not in VIEW_NAMES:
+            raise ValueError(f"stream_view must be one of {VIEW_NAMES}, "
+                             f"got {self.stream_view!r}")
+        if self.stream_width < 160 or self.stream_height < 90:
+            raise ValueError("stream resolution must be >= 160x90")
+        if not (0.1 <= self.stream_fps <= 30.0):
+            raise ValueError("stream_fps must be between 0.1 and 30")
+        if not (1 <= self.stream_jpeg_quality <= 95):
+            raise ValueError("stream_jpeg_quality must be between 1 and 95")
+        if self.stream_max_points < 1000:
+            raise ValueError("stream_max_points must be >= 1000")
         parse_color(self.background_color)  # raises on bad value
 
     def background_rgb(self) -> tuple:

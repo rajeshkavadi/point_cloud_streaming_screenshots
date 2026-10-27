@@ -2,12 +2,13 @@
 
 One-button, single-shot point-cloud screenshots for a remote browser user.
 Click **Fetch Point Cloud** in Chrome on a *different network*; the host
-captures exactly **one** current `PointCloud2` message, renders **four** PNG
+captures exactly **one** current `PointCloud2` message, renders **five** PNG
 views of that same message, and returns them to the browser.
 
-This is **not** a streaming application: there is no continuous video, no
-WebSocket point feed, and no real-time browser 3D viewer. Snapshots are only
-produced when the user clicks the button.
+This is **not** a streaming application: snapshots are produced only when the
+user clicks the button. One opt-in exception: the **Live View**
+(`GET /api/stream`) streams rendered JPEG frames continuously while a viewer
+is connected (see §1 and §5).
 
 ---
 
@@ -32,7 +33,7 @@ SnapshotStore: latest immutable snapshot   (pc_snapshot/store.py)
 Open3D headless renderer (+ Matplotlib fallback)   (pc_snapshot/renderer.py)
         |
         v
-Four PNG files (top, side, front, perspective) + metadata
+Five PNG files (top, front, back, left, right) + metadata
         |
         v
 FastAPI HTTP API                  (pc_snapshot/api.py)
@@ -51,7 +52,7 @@ WSL so the exact same code can later run on an NVIDIA Jetson Orin (see §9).
 
 - **One message per snapshot.** The subscriber decodes each message into a
   read-only numpy snapshot. `POST /api/snapshot` captures a reference to
-  exactly one such snapshot and renders all four views from that single
+  exactly one such snapshot and renders all five views from that single
   point set and one shared bounding box. The live subscriber buffer is never
   mutated or blocked by rendering.
 - **Bounded work.** A non-blocking semaphore caps simultaneous render jobs
@@ -65,6 +66,26 @@ WSL so the exact same code can later run on an NVIDIA Jetson Orin (see §9).
   labelled "current".
 - **Real errors.** Missing topic, no message yet, empty cloud, decode
   failure, and render failure each return a specific HTTP status + message.
+- **Opt-in live view (added later by request).** `GET /api/stream` streams
+  rendered frames of the incoming topic using `multipart/x-mixed-replace`
+  (the same MJPEG mechanism Flask/OpenCV camera tutorials use — a plain
+  `<img>` tag displays it). Rendering runs only while at least one viewer is
+  connected, targets a bounded FPS (`stream_fps`, default 5) at a reduced
+  resolution (`stream_width x stream_height`), and stops after
+  `stream_idle_stop_sec` of no viewers. Snapshots remain one-shot on demand.
+
+### Renderer threading (important implementation note)
+
+This Open3D/Filament build has three hard constraints: a renderer may only
+be **used on the thread that created it**, destroying one renderer while
+another exists **panics the process**, and every new renderer re-pays a ~5 s
+first-render warm-up. The service therefore keeps **exactly one**
+OffscreenRenderer, owned by a single dedicated `o3d-render` thread; snapshot
+and live-stream jobs are both submitted to that thread
+(`renderer.submit_render`). It is destroyed once, on that thread, at
+shutdown (`atexit` / `__main__`). Forced-backend tests
+(`--renderer open3d` path) verify the Open3D path actually renders instead
+of silently falling back to Matplotlib.
 
 ---
 
@@ -192,7 +213,10 @@ python3 -m pc_snapshot \
   --max-render-points 300000 \
   --clip-range 60 \          # radial clip in meters (0 = off)
   --stale-after 5.0 \
-  --api-token mysecret       # optional; require X-API-Token header
+  --api-token mysecret \     # optional; require X-API-Token header
+  --stream-fps 5 \           # live view target FPS (0.1 - 30)
+  --stream-view front  # top | front | back | left | right
+  # --no-stream              # disable GET /api/stream entirely
 ```
 
 Copy `config.example.json` and pass it with `--config my.json` (or
@@ -210,9 +234,10 @@ either with `--renderer open3d` or `--renderer matplotlib`.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/health` | Status, ROS connection, topic, message age, frame id, diagnostics |
-| POST | `/api/snapshot` | Capture one message, render four views, return metadata + image URLs |
-| GET | `/api/snapshot/{id}/{view}.png` | One PNG (`top`, `side`, `front`, `perspective`) |
-| GET | `/api/snapshot/{id}/download.zip` | ZIP of all four PNGs + `metadata.json` |
+| POST | `/api/snapshot` | Capture one message, render five views, return metadata + image URLs |
+| GET | `/api/snapshot/{id}/{view}.png` | One PNG (`top`, `front`, `back`, `left`, `right`) |
+| GET | `/api/snapshot/{id}/download.zip` | ZIP of all five PNGs + `metadata.json` |
+| GET | `/api/stream?view=…` | **Live view**: endless JPEG frame stream (`multipart/x-mixed-replace`) of the current topic |
 | GET | `/` | Browser frontend |
 
 `POST /api/snapshot` returns JSON like:
@@ -228,8 +253,8 @@ either with `--renderer open3d` or `--renderer matplotlib`.
   "valid_point_count": 131072,
   "rendered_point_count": 131024,
   "render_seconds": 6.7,
-  "views": ["top", "side", "front", "perspective"],
-  "images": { "top": ".../top.png", "side": "...", "front": "...", "perspective": "..." },
+  "views": ["top", "front", "back", "left", "right"],
+  "images": { "top": ".../top.png", "front": "...", "back": "...", "left": "...", "right": "..." },
   "download_zip": ".../download.zip",
   "warnings": []
 }
@@ -244,6 +269,24 @@ busy / empty cloud · `500` render failure.
 for a private Tailscale-only network. This is intentionally simple; the real
 protection is that the API is only reachable inside your tailnet.
 
+**Live view** — `GET /api/stream?view=front&token=…`:
+
+- Content type `multipart/x-mixed-replace; boundary=frame`; each part is one
+  JPEG frame. Browsers render it natively in `<img src="…">` — no WebSocket,
+  no video codec, no client-side player. This is exactly the mechanism used
+  by Flask/OpenCV MJPEG camera-streaming tutorials, with a rendered point
+  cloud as the frame source instead of a camera.
+- `view` selects the camera angle (default `stream_view`, currently
+  `front`). front/back/left/right are first-person: the camera sits at the
+  sensor origin and looks outward, as if you were standing at the Livox
+  Mid-360. The token must be passed as `?token=` here (an `<img>` tag
+  cannot set headers).
+- While waiting for the first frame or new data the endpoint re-sends a
+  placeholder JPEG as a keep-alive, so the browser always shows status.
+- Measured on this host through a Cloudflare quick tunnel: **~4.6 fps** at
+  960×540, ~90 KB/frame (~3.6 Mbit/s), one-time ~5 s warm-up on the first
+  render after service start, `401` without the token.
+
 ---
 
 ## 6. Browser frontend
@@ -254,13 +297,19 @@ protection is that the API is only reachable inside your tailnet.
 - A configurable **API endpoint** (defaults to the page's own origin; saved
   in `localStorage`) and an optional API token field.
 - A **Fetch Point Cloud** button (single POST; disabled while running).
-- A four-panel layout labelled Top / Side / Front / 45° Perspective.
+- A **Live View** panel: **Start/Stop Live View** button, a camera-angle
+  selector, an `<img>` bound to `/api/stream`, and a status readout
+  (fps · points, refreshed from `/api/health`). Rendering starts only when
+  you click Start and stops when you click Stop (or all viewers leave).
+- A five-panel layout labelled Top / Front / Back / Left / Right —
+  front/back/left/right are rendered as if standing at the sensor.
 - Capture time, ROS message time, frame id, point counts, render time,
   warnings, and an error area.
 - Per-image **Download PNG** links and a **Download All Images ZIP** button.
 
-There is **no polling** and **no automatic refresh**; images change only when
-you click the button.
+Snapshot images change only when you click **Fetch Point Cloud** — there is
+no automatic snapshot refresh. The Live View stream, when started, is
+continuous by design.
 
 ---
 
@@ -352,7 +401,7 @@ On the **remote Windows client** (Chrome):
 1. Open `http://<HOST_TAILSCALE_IP>:8085/api/health` — you should see the JSON
    health payload.
 2. Open `http://<HOST_TAILSCALE_IP>:8085/` — the viewer loads.
-3. Click **Fetch Point Cloud** — four PNGs appear.
+3. Click **Fetch Point Cloud** — five PNGs appear.
 
 Replace `<HOST_TAILSCALE_IP>` with the value from 7.2. In the UI the **API
 endpoint** box can stay empty (it defaults to the page origin, i.e. the
@@ -422,7 +471,7 @@ source /opt/ros/humble/setup.bash   # not required for tests, but harmless
 python3 -m pytest tests/ -q
 ```
 
-42 tests pass. Coverage includes:
+57 tests pass. Coverage includes:
 
 - **Decoder** (`test_decoder.py`): XYZ + intensity, no-intensity, big-endian,
   row padding, non-finite filtering, empty messages, non-standard field
@@ -431,15 +480,21 @@ python3 -m pytest tests/ -q
 - **Store** (`test_store.py`): latest-message-wins, capture-before-any-message,
   empty-message rejection, immutable capture, staleness, snapshot consistency
   when new messages arrive mid-render, thread safety.
-- **Renderer** (`test_renderer.py`): four views from one snapshot, camera
-  geometry for z-up and y-up, bounds/colors, non-blank PNGs, distinct views,
+- **Renderer** (`test_renderer.py`): five views from one snapshot, camera
+  geometry for z-up and y-up (first-person front/back/left/right from the
+  sensor origin), bounds/colors, non-blank PNGs, distinct views,
   valid PNG bytes, intensity mode, empty/single-point clouds, downsampled
-  counts.
+  counts, **forced Open3D backend** (no silent Matplotlib fallback) and
+  shared-renderer frame reuse.
 - **API** (`test_api.py`): health with/without data, snapshot rejected when no
-  data, stale warn vs reject, full flow returning four valid PNGs, all four
+  data, stale warn vs reject, full flow returning five valid PNGs, all five
   images from one snapshot id, invalid view/id + path-traversal rejection, ZIP
   contents + metadata, registry eviction, required-token auth, downsample
   warning, frontend served.
+- **Live stream** (`test_stream.py`): multipart framing and JPEG validity,
+  placeholder heartbeats when no data, frame publication while a client
+  watches, client ref-counting, render-loop idle stop, endpoint status codes
+  (401/400/404), generator cleanup on disconnect, health `stream` block.
 
 Tests are ROS-free (they use duck-typed fake PointCloud2 messages from
 `tests/fixtures.py`), so they run without a bag or a live ROS graph.

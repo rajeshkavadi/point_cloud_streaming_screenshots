@@ -14,10 +14,11 @@ import sys
 from pathlib import Path
 
 from .api import create_app
-from .config import Config
+from .config import Config, VIEW_NAMES
 from .jobs import RenderCoordinator, SnapshotRegistry
 from .ros_subscriber import RosCloudListener
 from .store import SnapshotStore
+from .stream import StreamManager
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,6 +41,13 @@ def build_parser() -> argparse.ArgumentParser:
                    help="radial clip from sensor origin in meters (default 0 = off)")
     p.add_argument("--api-token", dest="api_token",
                    help="optional API token required in X-API-Token header")
+    p.add_argument("--stream-fps", type=float, dest="stream_fps",
+                   help="live stream target FPS (default 5)")
+    p.add_argument("--stream-view", dest="stream_view",
+                   choices=list(VIEW_NAMES),
+                   help="default live stream camera view (default front)")
+    p.add_argument("--no-stream", action="store_true",
+                   help="disable the live /api/stream endpoint")
     p.add_argument("--no-ros", action="store_true",
                    help="run without a ROS subscriber (API/testing only)")
     p.add_argument("--work-dir", dest="work_dir",
@@ -64,6 +72,9 @@ def main(argv=None) -> int:
         "stale_after_sec": args.stale_after_sec,
         "clip_range_m": args.clip_range_m,
         "api_token": args.api_token,
+        "stream_fps": args.stream_fps,
+        "stream_view": args.stream_view,
+        "stream_enabled": (False if args.no_stream else None),
     })
 
     store = SnapshotStore(topic=cfg.topic, stale_after_sec=cfg.stale_after_sec)
@@ -71,6 +82,7 @@ def main(argv=None) -> int:
     registry = SnapshotRegistry(work_dir, cfg.max_snapshots,
                                 cfg.snapshot_retention_sec)
     coordinator = RenderCoordinator(cfg, registry)
+    stream = StreamManager(cfg, store)
 
     listener = None
     if not args.no_ros:
@@ -81,12 +93,14 @@ def main(argv=None) -> int:
             logging.error("failed to start ROS subscriber: %s", exc)
             listener = None
 
-    app = create_app(cfg, store, coordinator, listener=listener)
+    app = create_app(cfg, store, coordinator, listener=listener, stream=stream)
 
     import uvicorn
     logging.info("starting HTTP server on %s:%d (topic=%s, renderer=%s)",
                  cfg.host, cfg.port, cfg.topic, cfg.renderer)
     uvicorn.run(app, host=cfg.host, port=cfg.port, log_level="info")
+    from .renderer import shutdown_render_thread
+    shutdown_render_thread()   # destroy Open3D renderer on its own thread
     if listener is not None:
         listener.stop()
     registry.shutdown()

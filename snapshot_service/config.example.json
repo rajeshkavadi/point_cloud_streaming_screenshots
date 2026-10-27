@@ -15,12 +15,19 @@
   "up_axis": "z",
   "point_size": 3.0,
   "fov_deg": 60.0,
-  "perspective_elev_deg": 45.0,
-  "perspective_azim_deg": -60.0,
   "clip_range_m": 60.0,
 
   "max_render_points": 300000,
   "max_concurrent_renders": 1,
   "max_snapshots": 50,
-  "snapshot_retention_sec": 600.0
+  "snapshot_retention_sec": 600.0,
+
+  "stream_enabled": true,
+  "stream_width": 960,
+  "stream_height": 540,
+  "stream_fps": 5.0,
+  "stream_max_points": 60000,
+  "stream_jpeg_quality": 72,
+  "stream_view": "front",
+  "stream_idle_stop_sec": 15.0
 }
